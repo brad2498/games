@@ -124,25 +124,66 @@ try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){AC=null;re
 MG=AC.createGain();MG.gain.value=.7;MG.connect(AC.destination);
 /* a simple echo for the piano and stings */
 FX=AC.createGain();var dl=AC.createDelay(1.5),fb=AC.createGain(),lp=AC.createBiquadFilter();dl.delayTime.value=.37;fb.gain.value=.38;lp.type="lowpass";lp.frequency.value=2200;FX.connect(MG);FX.connect(dl);dl.connect(lp);lp.connect(fb);fb.connect(dl);lp.connect(MG);
-/* rain: hiss plus low rumble */
-var r=AC.createBufferSource();r.buffer=noiseBuf(3);r.loop=true;var hp=AC.createBiquadFilter();hp.type="highpass";hp.frequency.value=900;var rl=AC.createBiquadFilter();rl.type="lowpass";rl.frequency.value=7000;var rg=AC.createGain();rg.gain.value=.05;r.connect(hp);hp.connect(rl);rl.connect(rg);rg.connect(MG);r.start();
-var lfo=AC.createOscillator(),lg=AC.createGain();lfo.frequency.value=.08;lg.gain.value=.018;lfo.connect(lg);lg.connect(rg.gain);lfo.start();
-var b=AC.createBufferSource();b.buffer=noiseBuf(4,1);b.loop=true;var bl=AC.createBiquadFilter();bl.type="lowpass";bl.frequency.value=260;var bgn=AC.createGain();bgn.gain.value=.16;b.connect(bl);bl.connect(bgn);bgn.connect(MG);b.start();
-AUD.push(setInterval(drop,240));hornLoop();bellLoop();pianoLoop();AC.resume()}
-function drop(){if(!AC||!MU||Math.random()>.25)return;var t=AC.currentTime,s=AC.createBufferSource();s.buffer=AC._db||(AC._db=noiseBuf(.05));var f=AC.createBiquadFilter();f.type="bandpass";f.frequency.value=500+Math.random()*900;f.Q.value=5;var g=AC.createGain();g.gain.setValueAtTime(.07*Math.random(),t);g.gain.exponentialRampToValueAtTime(.0001,t+.04);s.connect(f);f.connect(g);g.connect(MG);s.start(t);s.stop(t+.05)}
+/* rain: hiss plus low rumble, very quiet (12.5% of original) */
+var r=AC.createBufferSource();r.buffer=noiseBuf(3);r.loop=true;var hp=AC.createBiquadFilter();hp.type="highpass";hp.frequency.value=900;var rl=AC.createBiquadFilter();rl.type="lowpass";rl.frequency.value=7000;var rg=AC.createGain();rg.gain.value=.00625;r.connect(hp);hp.connect(rl);rl.connect(rg);rg.connect(MG);r.start();
+var lfo=AC.createOscillator(),lg=AC.createGain();lfo.frequency.value=.08;lg.gain.value=.00225;lfo.connect(lg);lg.connect(rg.gain);lfo.start();
+var b=AC.createBufferSource();b.buffer=noiseBuf(4,1);b.loop=true;var bl=AC.createBiquadFilter();bl.type="lowpass";bl.frequency.value=260;var bgn=AC.createGain();bgn.gain.value=.02;b.connect(bl);bl.connect(bgn);bgn.connect(MG);b.start();
+AUD.push(setInterval(drop,240));hornLoop();bellLoop();startConsultingTheme();AC.resume()}
+function drop(){if(!AC||!MU||Math.random()>.25)return;var t=AC.currentTime,s=AC.createBufferSource();s.buffer=AC._db||(AC._db=noiseBuf(.05));var f=AC.createBiquadFilter();f.type="bandpass";f.frequency.value=500+Math.random()*900;f.Q.value=5;var g=AC.createGain();g.gain.setValueAtTime(.00875*Math.random(),t);g.gain.exponentialRampToValueAtTime(.0001,t+.04);s.connect(f);f.connect(g);g.connect(MG);s.start(t);s.stop(t+.05)}
 
 function hornLoop(){AUD.push(setTimeout(function(){if(AC&&MU&&AC.state==="running"){var t=AC.currentTime+.05,g=AC.createGain(),lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=420;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.06,t+.8);g.gain.linearRampToValueAtTime(.05,t+2.4);g.gain.linearRampToValueAtTime(0,t+3.6);lp.connect(g);g.connect(FX);[73.4,73.9,110.2].forEach(function(f){var o=AC.createOscillator();o.type="sawtooth";o.frequency.value=f;o.connect(lp);o.start(t);o.stop(t+3.8)})}hornLoop()},22000+Math.random()*26000))}
 function bellLoop(){AUD.push(setTimeout(function(){if(AC&&MU&&AC.state==="running"){var t=AC.currentTime+.05;for(var k=0;k<3;k++){note(164.81,t+k*2.6,.04,5);note(164.81*2.76,t+k*2.6,.012,3)}}bellLoop()},40000+Math.random()*40000))}
 var TK=0;function tick(){if(!AC||!MU)return;var t=AC.currentTime+.01,o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();TK^=1;o.type="square";o.frequency.value=TK?1650:1380;f.type="bandpass";f.frequency.value=TK?3000:2400;f.Q.value=4;g.gain.setValueAtTime(.035,t);g.gain.exponentialRampToValueAtTime(.0001,t+.03);o.connect(f);f.connect(g);g.connect(MG);o.start(t);o.stop(t+.04)}
 function note(f,t,v,len){var g=AC.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.008);g.gain.exponentialRampToValueAtTime(v*.3,t+.4);g.gain.exponentialRampToValueAtTime(.0001,t+(len||3.2));g.connect(FX);[[1,1],[2,.35],[3,.12],[4.02,.05]].forEach(function(p){var o=AC.createOscillator(),pg=AC.createGain();o.type="sine";o.frequency.value=f*p[0];pg.gain.value=p[1];o.connect(pg);pg.connect(g);o.start(t);o.stop(t+(len||3.2)+.1)})}
-var SCALE=[130.81,155.56,174.61,196,207.65,233.08,261.63,311.13,349.23,392];
-function pianoLoop(){var w=2600+Math.random()*4200;AUD.push(setTimeout(function(){if(AC&&MU&&AC.state==="running"){var t=AC.currentTime+.05,i=Math.floor(Math.random()*SCALE.length);note(SCALE[i],t,.05);if(Math.random()<.45)note(SCALE[Math.max(0,i-2)]/2,t+.02,.035,4);if(Math.random()<.3)note(SCALE[Math.min(SCALE.length-1,i+2)],t+.45,.03)}pianoLoop()},w))}
 function sting(big){if(!AC||!MU||AC.state!=="running")return;var t=AC.currentTime+.02;
 var n=AC.createBufferSource();n.buffer=AC._sb||(AC._sb=noiseBuf(2));var f=AC.createBiquadFilter();f.type="bandpass";f.frequency.setValueAtTime(400,t);f.frequency.exponentialRampToValueAtTime(1800,t+1.4);f.Q.value=6;var g=AC.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.4);g.gain.linearRampToValueAtTime(0,t+1.6);n.connect(f);f.connect(g);g.connect(MG);n.start(t);n.stop(t+1.7);
 var o=AC.createOscillator(),og=AC.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(32,t+1.2);og.gain.setValueAtTime(.25,t);og.gain.exponentialRampToValueAtTime(.001,t+1.4);o.connect(og);og.connect(MG);o.start(t);o.stop(t+1.5);
 [146.83,174.61,220].concat(big?[293.66]:[]).forEach(function(fr,k){note(fr,t+k*.06,.05,3.5)})}
 function toggleMute(){MU=!MU;try{localStorage.setItem("blackthorn2_mute",MU?"0":"1")}catch(e){}if(MU){initAudio();if(AC)AC.resume()}else if(AC)AC.suspend();document.querySelectorAll(".snd").forEach(function(b){b.textContent=MU?"🔊":"🔇"})}
 document.addEventListener("visibilitychange",function(){if(AC&&MU){document.hidden?AC.suspend():AC.resume()}});
+
+/* The Consulting Room: a looping detective theme in A minor.
+   Warm low strings, light pizzicato bass, soft clarinet-like melody.
+   Subtle enough to sit under dialogue. Original Web Audio. Mute uses AudioContext.suspend. */
+var _cNext=0,_cOn=false,CG=null,CFX=null;
+function cAt(bar,beat,t0){return t0+(bar*4+beat)*0.75}
+function cOsc(ac,dest,type,freq,t,dur,detune){var o=ac.createOscillator();o.type=type;o.frequency.value=freq;if(detune)o.detune.value=detune;o.connect(dest);o.start(t);o.stop(t+dur+.05)}
+function cEnv(ac,dest,t,vel,attack,decayTo,decayT,dur){var g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vel,t+attack);g.gain.exponentialRampToValueAtTime(Math.max(vel*decayTo,.0001),t+decayT);g.gain.exponentialRampToValueAtTime(.0001,t+dur);g.connect(dest);return g}
+function cPad(ac,dest,freq,t,dur,vel,cutoff){var lp=ac.createBiquadFilter();lp.type="lowpass";lp.frequency.value=cutoff||640;lp.Q.value=.4;var g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vel,t+.55);g.gain.setValueAtTime(vel,t+Math.max(dur-.7,.6));g.gain.linearRampToValueAtTime(0,t+dur);var mix=ac.createGain();cOsc(ac,mix,"sawtooth",freq,t,dur,-6);cOsc(ac,mix,"sawtooth",freq,t,dur,7);cOsc(ac,mix,"sine",freq,t,dur,0);mix.connect(lp);lp.connect(g);g.connect(dest)}
+function cPizz(ac,dest,freq,t,vel){var g=cEnv(ac,dest,t,vel,.003,.25,.08,.38);cOsc(ac,g,"sine",freq,t,.4);var pg=ac.createGain();pg.gain.value=.35;cOsc(ac,pg,"sine",freq*2,t,.25);pg.connect(g);var click=ac.createBufferSource();click.buffer=ac._tickN||(ac._tickN=noiseBuf(.03));var bp=ac.createBiquadFilter();bp.type="bandpass";bp.frequency.value=freq*3;bp.Q.value=2.5;var cg=ac.createGain();cg.gain.setValueAtTime(vel*.3,t);cg.gain.exponentialRampToValueAtTime(.0001,t+.025);click.connect(bp);bp.connect(cg);cg.connect(dest);click.start(t);click.stop(t+.04)}
+function cPiano(ac,dest,freq,t,vel,dur){var g=cEnv(ac,dest,t,vel,.007,.32,.42,dur);[[1,1],[2,.34],[3,.13],[4.02,.06],[5,.03]].forEach(function(p){var pg=ac.createGain();pg.gain.value=p[1];cOsc(ac,pg,"sine",freq*p[0],t,dur+.15);pg.connect(g)})}
+function cClar(ac,dest,freq,t,vel,dur){var lp=ac.createBiquadFilter();lp.type="lowpass";lp.frequency.value=1680;lp.Q.value=.7;var g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vel,t+.09);g.gain.setValueAtTime(vel*.92,t+Math.max(dur-.25,.2));g.gain.linearRampToValueAtTime(0,t+dur);lp.connect(g);g.connect(dest);[[1,1],[3,.38],[5,.14],[7,.06],[9,.025]].forEach(function(p){var pg=ac.createGain();pg.gain.value=p[1];cOsc(ac,pg,"sine",freq*p[0],t,dur+.05);pg.connect(lp)})}
+function scheduleConsultingTheme(t0){
+  var pads=[[0,4,[110,164.81,220],580],[4,4,[87.31,130.81,174.61],620],[8,4,[130.81,164.81,196],640],[12,3,[82.41,123.47,164.81],560],[15,1,[110,164.81,220],580]];
+  pads.forEach(function(c){var t=cAt(c[0],0,t0),dur=c[1]*3+(c[0]===15?.85:.2);c[2].forEach(function(f,i){cPad(AC,CG,f,t,dur,i===0?.024:.016,c[3])})});
+  [[0,0,110],[0,2,164.81],[1,0,110],[1,2,164.81],[1,3,196],[2,0,110],[2,2,164.81],[3,0,110],[3,2,130.81],[3,3,164.81],[4,0,87.31],[4,2,130.81],[5,0,87.31],[5,2,130.81],[5,3,110],[6,0,87.31],[6,2,130.81],[7,0,82.41],[7,2,123.47],[7,3,146.83],[8,0,130.81],[8,2,98],[9,0,130.81],[9,2,164.81],[9,3,98],[10,0,130.81],[10,2,98],[11,0,123.47],[11,2,146.83],[12,0,82.41],[12,2,123.47],[13,0,82.41],[13,2,196],[14,0,82.41],[14,2,123.47],[14,3,103.83],[15,0,110]].forEach(function(n){cPizz(AC,CFX,n[2],cAt(n[0],n[1],t0),.08)});
+  [[0,0,220],[0,1,261.63],[0,2,329.63],[0,3,440],[4,0,174.61],[4,1,220],[4,2,261.63],[4,3,349.23],[8,0,196],[8,1,261.63],[8,2,329.63],[8,3,392],[12,0,164.81],[12,1,246.94],[12,2,329.63]].forEach(function(n){cPiano(AC,CFX,n[2],cAt(n[0],n[1],t0),.024,1.3)});
+  [[0,0,329.63,2],[0,2,440,2],[1,0,392,1],[1,1,369.99,1],[1,2,329.63,1],[1,3,293.66,1],[2,0,261.63,2],[2,2,293.66,1],[2,3,329.63,1],[3,0,220,4],[4,0,523.25,2],[4,2,493.88,1],[4,3,440,1],[5,0,392,2],[5,2,329.63,2],[6,0,369.99,1],[6,1,392,1],[6,2,440,1],[6,3,493.88,1],[7,0,440,4],[8,0,329.63,1],[8,1,392,1],[8,2,440,1],[8,3,523.25,1],[9,0,493.88,1],[9,1,440,1],[9,2,392,1],[9,3,329.63,1],[10,0,349.23,2],[10,2,329.63,1],[10,3,293.66,1],[11,0,329.63,4],[12,0,440,2],[12,2,392,1],[12,3,329.63,1],[13,0,293.66,2],[13,2,261.63,1],[13,3,246.94,1],[14,0,220,1],[14,1,261.63,1],[14,2,329.63,1],[14,3,392,1],[15,0,440,3.6]].forEach(function(n){cClar(AC,CFX,n[2],cAt(n[0],n[1],t0),.055,n[3]*0.75*0.96)});
+}
+function consultingLoop(){
+  if(!AC)return;
+  if(!MU||AC.state!=="running"){AUD.push(setTimeout(consultingLoop,400));return}
+  var now=AC.currentTime;
+  if(_cNext<now-.05)_cNext=now+.06;
+  if(_cNext>now+.55){AUD.push(setTimeout(consultingLoop,Math.max(50,(_cNext-now-.35)*1000)));return}
+  scheduleConsultingTheme(_cNext);
+  _cNext+=48;
+  AUD.push(setTimeout(consultingLoop,Math.max(50,(_cNext-AC.currentTime-.35)*1000)));
+}
+function startConsultingTheme(){
+  if(!AC||_cOn)return;
+  _cOn=true;
+  CG=AC.createGain();
+  CG.gain.setValueAtTime(0,AC.currentTime);
+  CG.gain.linearRampToValueAtTime(1,AC.currentTime+.9);
+  CG.connect(MG);
+  CFX=AC.createGain();
+  var dl=AC.createDelay(1.5),fb=AC.createGain(),lp=AC.createBiquadFilter();
+  dl.delayTime.value=.37;fb.gain.value=.32;lp.type="lowpass";lp.frequency.value=2100;
+  CFX.connect(CG);CFX.connect(dl);dl.connect(lp);lp.connect(fb);fb.connect(dl);lp.connect(CG);
+  _cNext=AC.currentTime+.08;
+  consultingLoop();
+}
 
 var E={
 ledger:{k:"p",i:"📕",t:"Pike’s Ledger",d:"Sewn into the lining of Pike’s bag. Every page is headed ‘T. 212’. ‘Supplier: 3.6. Theatre: 4.4, “H.”. Courier:’ and then a thumbprint of ink. Each entry is a pair of numbers."},
@@ -464,7 +505,7 @@ if(sv&&sv.started&&sv.evo&&sv.evo.length)h+='<button class="wide" data-f="cont">
 if(p1)h+='<button class="wide'+(sv&&sv.evo&&sv.evo.length?' ghost':'')+'" data-f="newgame" data-a="1">Continue from Part 1 ('+ENDN[p1.ending]+', '+p1.score+' picarats)</button>';
 h+='<button class="wide'+((sv&&sv.evo&&sv.evo.length)||p1?' ghost':'')+'" data-f="newgame">'+(sv&&sv.evo&&sv.evo.length?'Start a new case':'New case')+'</button>';
 if(!p1)h+='<p class="sm">Haven’t played Part 1? <a href="../blackthorn/" style="color:var(--gold)">Play The Blackthorn Affair first</a>, or start here: a short recap will catch you up.</p>';
-h+='<p class="sm">Best with sound on. 🔊 River fog, a foghorn and a slow piano, all made in your browser.</p></div>';app.innerHTML=h;window.scrollTo(0,0)}
+h+='<p class="sm">Best with sound on. 🔊 River fog, a foghorn and a little background music, all made in your browser.</p></div>';app.innerHTML=h;window.scrollTo(0,0)}
 var PEND=0;
 function newgame(imp,force){if(imp!=null&&imp!=="")PEND=+imp;else if(!force)PEND=0;var sv=load();if(!force&&sv&&sv.evo&&sv.evo.length){modal('<h2>Start again?</h2><p>This clears your saved investigation.</p><button data-f="newgame2">Start again</button><button class="ghost" data-f="closeModal">Cancel</button>');return}
 closeModal();S=fresh();if(PEND){var r=readP1();if(r){S.p1=r;S.coins+=p1bonus(r)}}save();intro(0)}
