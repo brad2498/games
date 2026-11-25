@@ -262,7 +262,7 @@ hi:"‘Inspector. Sit, if you must.’",
 ask:[
 {q:"What you heard",a:"‘The dining-hall door has a hinge like a scream. I heard it three times while I played: during my first piece, which was Crowe with the port; once just as I lifted my hands from the Raindrop Prelude; and once after I had finished at ten, when Henry went in. I began at nine. The hall clock struck as I sat down.’",give:["heard"]},
 {q:"Your evening",a:"‘I played from nine until ten without leaving the stool. Ask Ellen. She would have heard me from the kitchen.’"},
-{q:"Your gloves",a:"‘Dove-grey kid. I have worn nothing else for twenty years.’"}],
+{q:"Your gloves",a:"‘Dove-grey kid. I have worn nothing else for twenty years. I left the pair on the hall stand before dinner, and when I went back for them at nine, one was gone. I thought Ellen had tidied it away.’",give:["glovehall"]}],
 lies:[
 {s:"‘Henry and I were content, Inspector. There was no quarrel between us.’",need:["solicitor"],ab:"her marriage, and Henry’s money",mi:"‘You have nothing that says otherwise, Inspector.’",wh:"Search the papers on Henry’s desk in the Study.",
 r:"For the first time her composure breaks. ‘The man in Kensington is my son. Thomas. I was seventeen. They took him from me the day he was born. I have sent him money for thirty years. Henry found my letters on Friday and wrote that in a rage. On Saturday he came to me and wept, and said he would meet the boy. I would have given anything for him to live another week.’",give:["ladysecret"]}],
@@ -399,6 +399,8 @@ var TL=[
 {t:"10:50 pm",x:"Lord Ashcombe dies. Dr Pike writes ‘failure of the heart’."},
 {t:"11:40 pm",x:"You arrive. The bridge goes down behind you."}
 ];
+
+TL.forEach(function(e){if(e.k&&e.k.indexOf("caseclosed")<0)e.k.push("caseclosed")});
 
 var INTRO=[
 {h:"The Telegram",a:"a5",p:["You are Inspector Alden Voss of Scotland Yard. Years ago you cleared Lord Henry Ashcombe’s name in a scandal, and he never forgot it.","At four o’clock on Sunday, 12 November 1893, a telegram reaches you: <b>‘Come at once. Someone in this house means to kill me. Ashcombe.’</b>","You catch the last train north and hire a trap across the moor, through a storm that never stops."]},
@@ -569,7 +571,8 @@ var WRONG=["Crowe goes quietly, as if he has always expected it. At York Assizes
 "Edmund is taken in the irons he always feared. The cherry tobacco in the cellar and the forged cheque convict him in an afternoon. He hangs at York, still swearing the doctor could have saved him. Dr Pike says nothing at all."];
 var P2L='<a class="btnlink" href="../blackthorn2/">▶ Play Part 2: The Physician’s Ledger</a>';
 function saveResult(e){try{var n=0;for(var k in S.caught)if(S.caught[k])n++;localStorage.setItem("blackthorn_v2_result",JSON.stringify({ending:e,score:S.score,secrets:["wrensecret","ladysecret","edmundsecret"].filter(has),lies:n}))}catch(x){}}
-function verdict(){var s=ACC.s,h;S.ended=1;playPause();var full0=s==2&&OKS.motive.indexOf(ACC.motive)>-1&&OKS.means.indexOf(ACC.means)>-1&&OKS.opp.indexOf(ACC.opp)>-1;saveResult(s!=2?"wrong":full0?"full":"thin");
+function closeTheEvening(full){if(!S.ev.glovehall)S.ev.glovehall=1;if(full)S.ev.caseclosed=1;save()}
+function verdict(){var s=ACC.s,h;S.ended=1;playPause();var full0=s==2&&OKS.motive.indexOf(ACC.motive)>-1&&OKS.means.indexOf(ACC.means)>-1&&OKS.opp.indexOf(ACC.opp)>-1;saveResult(s!=2?"wrong":full0?"full":"thin");closeTheEvening(s==2&&full0);
 if(s!=2){h='<div class="center"><div class="big">🌑</div><h1>The Wrong Neck</h1>'+art("a5")+'<p class="story">'+WRONG[s]+'</p><p>And at Blackthorn, Dr Silas Pike goes on writing prescriptions.</p><p class="sub">The real killer walked free. Look again at who gained from the false clues, and at your timeline.</p><button class="wide" data-f="reopen">Reopen the case</button>'+P2L+'<button class="wide ghost" data-f="newgame">Start a new investigation</button></div>';sting();return show(h)}
 var full=OKS.motive.indexOf(ACC.motive)>-1&&OKS.means.indexOf(ACC.means)>-1&&OKS.opp.indexOf(ACC.opp)>-1;
 if(!full){var miss=STEPS.filter(function(st){return OKS[st[0]].indexOf(ACC[st[0]])<0}).map(function(st){return st[1].toLowerCase()});
